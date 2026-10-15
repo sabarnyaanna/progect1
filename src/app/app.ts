@@ -11,6 +11,7 @@ import { ProductsService, Flower } from './products.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.scss']
 })
+
 export class AppComponent {
   showAuthModal = signal(false);
   showAdminModal = signal(false);

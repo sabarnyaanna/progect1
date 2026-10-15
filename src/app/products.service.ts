@@ -13,7 +13,7 @@ export interface Flower {
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
   private flowers = signal<Flower[]>([
-    // === БУКЕТИ ===
+    // ... твої 24 товари залишаються без змін ...
     {
       id: 1,
       title: 'Букет "Ніжність півоній"',
@@ -102,8 +102,6 @@ export class ProductsService {
       image: 'https://i.pinimg.com/736x/3f/84/2f/3f842f21246648cb14de32eb8179abf8.jpg',
       description: 'Розкішний об’ємний букет із ніжно-блакитної гортензії.'
     },
-
-    // === КВІТИ ПОШТУЧНО ===
     {
       id: 12,
       title: 'Кущова роза (гілочка)',
@@ -225,7 +223,21 @@ export class ProductsService {
       id: Date.now(),
       image: f.image || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVRVFb_F8p_qjHvlxxsVhS6caGo7-BS_hPzZlIPUfOgyTLcJu43xIV9O2J&s=10'
     };
-    this.flowers.update(list => [...list, newFlower]);
+    this.flowers.update(list => [newFlower, ...list]);
     return of(newFlower);
+  }
+
+  // Оновлення ціни позиції
+  updatePrice(id: number, newPrice: number): Observable<boolean> {
+    this.flowers.update(list =>
+      list.map(f => f.id === id ? { ...f, price: newPrice } : f)
+    );
+    return of(true);
+  }
+
+  // Видалення позиції з каталогу
+  delete(id: number): Observable<boolean> {
+    this.flowers.update(list => list.filter(f => f.id !== id));
+    return of(true);
   }
 }

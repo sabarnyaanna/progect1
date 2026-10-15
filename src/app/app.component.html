@@ -1,13 +1,159 @@
-<header style="background-color: #181818; border-bottom: 1px solid #2A2A2A; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;">
+<!-- ШАПКА САЙТУ -->
+<header style="background-color: #181818; border-bottom: 1px solid #2A2A2A; padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
   <a routerLink="/" style="color: #F5F2EB; font-family: 'Cinzel', serif; font-size: 20px; font-weight: 600; text-decoration: none; letter-spacing: 2px;">
     FLORA<span style="color: #C5A880;">BOUTIQUE</span>
   </a>
-  <nav style="display: flex; gap: 24px;">
-    <a routerLink="/" style="color: #A39E93; text-decoration: none; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Головна</a>
-    <a routerLink="/products" style="color: #C5A880; text-decoration: none; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Каталог</a>
+
+  <nav style="display: flex; gap: 20px; align-items: center;">
+    <a routerLink="/" style="color: #A39E93; text-decoration: none; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Головна</a>
+    <a routerLink="/products" style="color: #C5A880; text-decoration: none; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Каталог</a>
+    
+    @if (!isAdminLoggedIn()) {
+      <button (click)="openAuthModal()" style="background: transparent; color: #E8E3D9; border: 1px solid #C5A880; padding: 8px 16px; font-size: 11px; font-weight: 500; text-transform: uppercase; cursor: pointer; letter-spacing: 1px; border-radius: 4px;">
+        Вхід / Реєстрація
+      </button>
+    } @else {
+      <button (click)="openAdminPanel()" style="background-color: #C5A880; color: #121212; border: none; padding: 8px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; cursor: pointer; letter-spacing: 1px; border-radius: 4px;">
+        Панель Адміна
+      </button>
+      <button (click)="logoutAdmin()" style="background: transparent; color: #A39E93; border: 1px solid #3A3A3A; padding: 8px 12px; font-size: 11px; cursor: pointer; border-radius: 4px;">
+        Вийти
+      </button>
+    }
   </nav>
 </header>
 
-<main style="background-color: #121212; min-height: calc(100vh - 70px);">
+<!-- ОСНОВНИЙ ВМІСТ -->
+<main style="background-color: #121212; min-height: calc(100vh - 250px);">
   <router-outlet></router-outlet>
 </main>
+
+<!-- МОДАЛЬНЕ ВІКНО ВХОДУ / РЕЄСТРАЦІЇ -->
+@if (showAuthModal()) {
+  <div (click)="closeModals()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+    <div (click)="$event.stopPropagation()" style="background: #181818; border: 1px solid #2A2A2A; border-radius: 8px; width: 100%; max-width: 400px; padding: 32px; color: #E8E3D9;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-family: 'Cinzel', serif; font-size: 20px; color: #F5F2EB; margin: 0;">Вхід до кабінету</h2>
+        <button (click)="closeModals()" style="background: none; border: none; color: #A39E93; font-size: 20px; cursor: pointer;">✕</button>
+      </div>
+
+      <form [formGroup]="authForm" (ngSubmit)="onAuthSubmit()">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Email</label>
+          <input formControlName="email" type="email" placeholder="example@mail.com" style="width: 100%; background: #121212; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Пароль</label>
+          <input formControlName="password" type="password" placeholder="••••••••" style="width: 100%; background: #121212; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+        </div>
+
+        <button type="submit" [disabled]="authForm.invalid" style="width: 100%; background: #C5A880; color: #121212; border: none; padding: 12px; border-radius: 4px; font-weight: 600; text-transform: uppercase; cursor: pointer;">
+          Увійти
+        </button>
+      </form>
+
+      <p style="font-size: 11px; color: #666; margin-top: 16px; text-align: center;">
+        (Тест адміна: admin&#64;flora.ua / admin123)
+      </p>
+    </div>
+  </div>
+}
+
+<!-- ПАНЕЛЬ АДМІНІСТРАТОРА (ДОДАВАННЯ + РЕДАГУВАННЯ + ВИДАЛЕННЯ) -->
+@if (showAdminModal()) {
+  <div (click)="closeModals()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+    <div (click)="$event.stopPropagation()" style="background: #181818; border: 1px solid #2A2A2A; border-radius: 8px; width: 100%; max-width: 600px; padding: 32px; color: #E8E3D9; max-height: 85vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-family: 'Cinzel', serif; font-size: 20px; color: #C5A880; margin: 0;">Управління Каталогом (Адмін)</h2>
+        <button (click)="closeModals()" style="background: none; border: none; color: #A39E93; font-size: 20px; cursor: pointer;">✕</button>
+      </div>
+
+      <!-- ФОРМА ДОДАВАННЯ -->
+      <div style="background: #121212; padding: 20px; border-radius: 6px; border: 1px solid #2A2A2A; margin-bottom: 24px;">
+        <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">+ Додати новий букет:</h4>
+        <form [formGroup]="productForm" (ngSubmit)="onAddProductSubmit()">
+          <div style="margin-bottom: 12px;">
+            <input formControlName="title" type="text" placeholder="Назва букета" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <input formControlName="price" type="number" placeholder="Ціна (₴)" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+            <input formControlName="category" type="text" placeholder="Категорія" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <input formControlName="image" type="text" placeholder="URL фото букета" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <textarea formControlName="description" placeholder="Опис букета" rows="2" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;"></textarea>
+          </div>
+
+          <button type="submit" [disabled]="productForm.invalid" style="width: 100%; background: #C5A880; color: #121212; border: none; padding: 12px; border-radius: 4px; font-weight: 600; text-transform: uppercase; cursor: pointer;">
+            Опублікувати букет
+          </button>
+        </form>
+      </div>
+
+      <!-- СПИСОК ДЛЯ РЕДАГУВАННЯ ТА ВИДАЛЕННЯ -->
+      <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">Керування наявними позиціями:</h4>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        @for (item of productList(); track item.id) {
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #121212; padding: 10px 14px; border-radius: 4px; border: 1px solid #2A2A2A;">
+            <div>
+              <strong style="color: #F5F2EB; font-size: 13px;">{{ item.title }}</strong>
+              <div style="color: #C5A880; font-size: 12px;">{{ item.price }} ₴</div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button (click)="editPrice(item.id, item.price)" style="background: #2A2A2A; color: #E8E3D9; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                ✏️ Змінити ціну
+              </button>
+              <button (click)="deleteProduct(item.id)" style="background: #5A1A1A; color: #FFD1D1; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                🗑️ Видалити
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- СТИЛЬНИЙ ФУТЕР -->
+<footer style="background-color: #0E0E0E; border-top: 1px solid #2A2A2A; padding: 40px 40px 20px; color: #A39E93; font-size: 13px;">
+  <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; padding-bottom: 30px; border-bottom: 1px solid #1F1F1F;">
+    <div>
+      <h3 style="font-family: 'Cinzel', serif; color: #F5F2EB; font-size: 16px; margin-bottom: 12px; letter-spacing: 1px;">FLORA<span style="color: #C5A880;">BOUTIQUE</span></h3>
+      <p style="line-height: 1.6; font-size: 12px;">Авторська флористика та преміальні букети з доставкою по місту.</p>
+    </div>
+
+    <div>
+      <h4 style="color: #C5A880; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Контакти</h4>
+      <p style="margin: 4px 0;">📞 +380 (97) 123-45-67</p>
+      <p style="margin: 4px 0;">✉️ order&#64;floraboutique.ua</p>
+      <p style="margin: 4px 0;">⏰ Щодня: 08:00 – 21:00</p>
+    </div>
+
+    <div>
+      <h4 style="color: #C5A880; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Локація</h4>
+      <p style="margin: 4px 0;">📍 м. Дніпро, вул. Дмитра Яворницького, 12</p>
+      <p style="margin: 4px 0; font-size: 11px; color: #666;">(Самовивіз та швидка доставка)</p>
+    </div>
+
+    <div>
+      <h4 style="color: #C5A880; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Соціальні мережі</h4>
+      <div style="display: flex; gap: 12px; font-size: 14px;">
+        <a href="#" style="color: #A39E93; text-decoration: none;">Instagram</a>
+        <a href="#" style="color: #A39E93; text-decoration: none;">Telegram</a>
+        <a href="#" style="color: #A39E93; text-decoration: none;">Pinterest</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #555;">
+    © 2026 FloraBoutique. Всі права захищено.
+  </div>
+</footer>

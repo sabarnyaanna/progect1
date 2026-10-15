@@ -23,12 +23,11 @@
   </nav>
 </header>
 
-<!-- ОСНОВНИЙ ВМІСТ -->
 <main style="background-color: #121212; min-height: calc(100vh - 250px);">
   <router-outlet></router-outlet>
 </main>
 
-<!-- МОДАЛЬНЕ ВІКНО ВХОДУ / РЕЄСТРАЦІЇ -->
+<!-- МОДАЛЬНЕ ВІКНО ВХОДУ -->
 @if (showAuthModal()) {
   <div (click)="closeModals()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
     <div (click)="$event.stopPropagation()" style="background: #181818; border: 1px solid #2A2A2A; border-radius: 8px; width: 100%; max-width: 400px; padding: 32px; color: #E8E3D9;">
@@ -39,12 +38,12 @@
 
       <form [formGroup]="authForm" (ngSubmit)="onAuthSubmit()">
         <div style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Email</label>
+          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; margin-bottom: 6px;">Email</label>
           <input formControlName="email" type="email" placeholder="example@mail.com" style="width: 100%; background: #121212; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
         </div>
 
         <div style="margin-bottom: 24px;">
-          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Пароль</label>
+          <label style="display: block; font-size: 11px; color: #A39E93; text-transform: uppercase; margin-bottom: 6px;">Пароль</label>
           <input formControlName="password" type="password" placeholder="••••••••" style="width: 100%; background: #121212; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
         </div>
 
@@ -60,19 +59,21 @@
   </div>
 }
 
-<!-- ПАНЕЛЬ АДМІНІСТРАТОРА (ДОДАВАННЯ + РЕДАГУВАННЯ + ВИДАЛЕННЯ) -->
+<!-- ПАНЕЛЬ АДМІНІСТРАТОРА -->
 @if (showAdminModal()) {
   <div (click)="closeModals()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-    <div (click)="$event.stopPropagation()" style="background: #181818; border: 1px solid #2A2A2A; border-radius: 8px; width: 100%; max-width: 600px; padding: 32px; color: #E8E3D9; max-height: 85vh; overflow-y: auto;">
+    <div (click)="$event.stopPropagation()" style="background: #181818; border: 1px solid #2A2A2A; border-radius: 8px; width: 100%; max-width: 620px; padding: 32px; color: #E8E3D9; max-height: 85vh; overflow-y: auto;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2 style="font-family: 'Cinzel', serif; font-size: 20px; color: #C5A880; margin: 0;">Управління Каталогом (Адмін)</h2>
         <button (click)="closeModals()" style="background: none; border: none; color: #A39E93; font-size: 20px; cursor: pointer;">✕</button>
       </div>
 
-      <!-- ФОРМА ДОДАВАННЯ -->
+      <!-- ФОРМА ДОДАВАННЯ / РЕДАГУВАННЯ -->
       <div style="background: #121212; padding: 20px; border-radius: 6px; border: 1px solid #2A2A2A; margin-bottom: 24px;">
-        <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">+ Додати новий букет:</h4>
-        <form [formGroup]="productForm" (ngSubmit)="onAddProductSubmit()">
+        <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">
+          {{ editingProductId() !== null ? '✏️ Редагування букета' : '+ Додати новий букет' }}:
+        </h4>
+        <form [formGroup]="productForm" (ngSubmit)="onSaveProductSubmit()">
           <div style="margin-bottom: 12px;">
             <input formControlName="title" type="text" placeholder="Назва букета" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;" />
           </div>
@@ -90,16 +91,23 @@
             <textarea formControlName="description" placeholder="Опис букета" rows="2" style="width: 100%; background: #181818; border: 1px solid #3A3A3A; padding: 10px; color: #FFF; border-radius: 4px; box-sizing: border-box;"></textarea>
           </div>
 
-          <button type="submit" [disabled]="productForm.invalid" style="width: 100%; background: #C5A880; color: #121212; border: none; padding: 12px; border-radius: 4px; font-weight: 600; text-transform: uppercase; cursor: pointer;">
-            Опублікувати букет
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="submit" [disabled]="productForm.invalid" style="flex: 1; background: #C5A880; color: #121212; border: none; padding: 12px; border-radius: 4px; font-weight: 600; text-transform: uppercase; cursor: pointer;">
+              {{ editingProductId() !== null ? '💾 Зберегти зміни' : '+ Опублікувати букет' }}
+            </button>
+            @if (editingProductId() !== null) {
+              <button type="button" (click)="resetProductForm()" style="background: #3A3A3A; color: #FFF; border: none; padding: 12px; border-radius: 4px; cursor: pointer;">
+                Скасувати
+              </button>
+            }
+          </div>
         </form>
       </div>
 
-      <!-- СПИСОК ДЛЯ РЕДАГУВАННЯ ТА ВИДАЛЕННЯ -->
-      <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">Керування наявними позиціями:</h4>
+      <!-- СПИСОК З КНОПКАМИ ДІЙ -->
+      <h4 style="margin: 0 0 12px 0; color: #F5F2EB; font-size: 14px;">Наявні позиції в каталозі:</h4>
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        @for (item of productList(); track item.id) {
+        @for (item of productList; track item.id) {
           <div style="display: flex; justify-content: space-between; align-items: center; background: #121212; padding: 10px 14px; border-radius: 4px; border: 1px solid #2A2A2A;">
             <div>
               <strong style="color: #F5F2EB; font-size: 13px;">{{ item.title }}</strong>
@@ -107,8 +115,8 @@
             </div>
 
             <div style="display: flex; gap: 8px;">
-              <button (click)="editPrice(item.id, item.price)" style="background: #2A2A2A; color: #E8E3D9; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-                ✏️ Змінити ціну
+              <button (click)="startEditProduct(item)" style="background: #2A2A2A; color: #E8E3D9; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                ✏️ Редагувати
               </button>
               <button (click)="deleteProduct(item.id)" style="background: #5A1A1A; color: #FFD1D1; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
                 🗑️ Видалити
@@ -122,7 +130,6 @@
   </div>
 }
 
-<!-- СТИЛЬНИЙ ФУТЕР -->
 <footer style="background-color: #0E0E0E; border-top: 1px solid #2A2A2A; padding: 40px 40px 20px; color: #A39E93; font-size: 13px;">
   <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; padding-bottom: 30px; border-bottom: 1px solid #1F1F1F;">
     <div>

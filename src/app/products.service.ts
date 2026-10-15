@@ -13,7 +13,6 @@ export interface Flower {
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
   private flowers = signal<Flower[]>([
-    // ... твої 24 товари залишаються без змін ...
     {
       id: 1,
       title: 'Букет "Ніжність півоній"',
@@ -208,6 +207,10 @@ export class ProductsService {
     }
   ]);
 
+  getFlowersSignal() {
+    return this.flowers;
+  }
+
   list(): Observable<Flower[]> {
     return of(this.flowers());
   }
@@ -227,7 +230,6 @@ export class ProductsService {
     return of(newFlower);
   }
 
-  // Оновлення ціни позиції
   updatePrice(id: number, newPrice: number): Observable<boolean> {
     this.flowers.update(list =>
       list.map(f => f.id === id ? { ...f, price: newPrice } : f)
@@ -235,7 +237,6 @@ export class ProductsService {
     return of(true);
   }
 
-  // Видалення позиції з каталогу
   delete(id: number): Observable<boolean> {
     this.flowers.update(list => list.filter(f => f.id !== id));
     return of(true);

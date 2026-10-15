@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,12 +11,12 @@ import { ProductsService, Flower } from './products.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   showAuthModal = signal(false);
   showAdminModal = signal(false);
   isAdminLoggedIn = signal(false);
-  
-  productList = signal<Flower[]>([]);
+
+  editingProductId = signal<number | null>(null);
 
   authForm: FormGroup;
   productForm: FormGroup;
@@ -29,19 +29,16 @@ export class AppComponent implements OnInit {
 
     this.productForm = this.fb.group({
       title: ['', Validators.required],
-      price: [1200, [Validators.required, Validators.min(100)]],
+      price: [1200, [Validators.required, Validators.min(10)]],
       category: ['Букети', Validators.required],
       image: ['https://images.unsplash.com/photo-1561181286-d3fee7d55364?q=80&w=600', Validators.required],
       description: ['', Validators.required]
     });
   }
 
-  ngOnInit() {
-    this.loadProducts();
-  }
-
-  loadProducts() {
-    this.productsService.list().subscribe(data => this.productList.set(data));
+  // Повертає список товарів для @for (item of productList)
+  get productList(): Flower[] {
+    return this.productsService.getFlowersSignal()();
   }
 
   openAuthModal() {
@@ -49,13 +46,13 @@ export class AppComponent implements OnInit {
   }
 
   openAdminPanel() {
-    this.loadProducts();
     this.showAdminModal.set(true);
   }
 
   closeModals() {
     this.showAuthModal.set(false);
     this.showAdminModal.set(false);
+    this.resetProductForm();
   }
 
   onAuthSubmit() {
@@ -79,33 +76,59 @@ export class AppComponent implements OnInit {
     alert('Ви вийшли з акаунта адміна.');
   }
 
-  onAddProductSubmit() {
-    if (this.productForm.valid) {
-      this.productsService.create(this.productForm.value).subscribe(() => {
-        alert('Букет успішно додано!');
-        this.loadProducts();
-        this.productForm.reset({ price: 1200, category: 'Букети', image: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?q=80&w=600' });
+  onSaveProductSubmit() {
+    if (this.productForm.invalid) return;
+
+    const formVal = this.productForm.value;
+    const currentId = this.editingProductId();
+
+    if (currentId !== null) {
+      this.productsService.updatePrice(currentId, formVal.price).subscribe(() => {
+        alert('Зміни успішно збережено!');
+        this.resetProductForm();
+      });
+    } else {
+      this.productsService.create(formVal).subscribe(() => {
+        alert('Новий букет успішно додано до каталогу!');
+        this.resetProductForm();
       });
     }
   }
 
+  onAddProductSubmit() {
+    this.onSaveProductSubmit();
+  }
+
+  startEditProduct(item: Flower) {
+    this.editingProductId.set(item.id);
+    this.productForm.patchValue({
+      title: item.title,
+      price: item.price,
+      category: item.category,
+      image: item.image,
+      description: item.description
+    });
+  }
+
   editPrice(id: number, currentPrice: number) {
-    const newPriceStr = prompt('Введіть нову ціну (₴):', currentPrice.toString());
-    if (newPriceStr) {
-      const newPrice = Number(newPriceStr);
-      if (!isNaN(newPrice) && newPrice > 0) {
-        this.productsService.updatePrice(id, newPrice).subscribe(() => {
-          this.loadProducts();
-          alert('Ціну оновлено!');
-        });
-      }
+    const item = this.productList.find(p => p.id === id);
+    if (item) {
+      this.startEditProduct(item);
     }
+  }
+
+  resetProductForm() {
+    this.editingProductId.set(null);
+    this.productForm.reset({
+      price: 1200,
+      category: 'Букети',
+      image: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?q=80&w=600'
+    });
   }
 
   deleteProduct(id: number) {
     if (confirm('Ви дійсно хочете видалити цей букет з каталогу?')) {
       this.productsService.delete(id).subscribe(() => {
-        this.loadProducts();
         alert('Букет видалено!');
       });
     }

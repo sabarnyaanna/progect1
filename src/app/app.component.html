@@ -1,0 +1,13 @@
+<header style="background-color: #181818; border-bottom: 1px solid #2A2A2A; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;">
+  <a routerLink="/" style="color: #F5F2EB; font-family: 'Cinzel', serif; font-size: 20px; font-weight: 600; text-decoration: none; letter-spacing: 2px;">
+    FLORA<span style="color: #C5A880;">BOUTIQUE</span>
+  </a>
+  <nav style="display: flex; gap: 24px;">
+    <a routerLink="/" style="color: #A39E93; text-decoration: none; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Головна</a>
+    <a routerLink="/products" style="color: #C5A880; text-decoration: none; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Каталог</a>
+  </nav>
+</header>
+
+<main style="background-color: #121212; min-height: calc(100vh - 70px);">
+  <router-outlet></router-outlet>
+</main>
